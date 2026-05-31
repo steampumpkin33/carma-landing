@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Carma — AI Car Diagnosis in Plain English</title>
+  <meta name="description" content="Describe any car problem and get a clear, honest diagnosis in seconds. No mechanic jargon. No guessing. Carma speaks your car's language."/>
+  <meta property="og:title" content="Carma — AI Car Diagnosis"/>
+  <meta property="og:description" content="Describe any car problem and get a clear diagnosis in seconds. Free to start."/>
+  <meta property="og:image" content="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=1200&q=80"/>
+  <meta name="theme-color" content="#f97316"/>
+  <link rel="icon" href="https://web-production-5205e.up.railway.app/icon.svg" type="image/svg+xml"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --orange:   #f97316;
+      --orange2:  #ea580c;
+      --orange3:  #fb923c;
+      --black:    #080808;
+      --dark:     #0e0e0e;
+      --surface:  #141414;
+      --surface2: #1c1c1c;
+      --border:   rgba(255,255,255,.09);
+      --text:     #f0f0f0;
+      --text2:    #a3a3a3;
+      --text3:    rgba(255,255,255,.25);
+      --font: 'Inter', system-ui, -apple-system, sans-serif;
+      --r: 14px;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font);
+      background: var(--black);
+      color: var(--text);
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    a { color: inherit; text-decoration: none; }
+    img { display: block; }
+
+    /* ── NAV ───────────────────────────────────────────────── */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      height: 64px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 clamp(20px, 5vw, 80px);
+      background: rgba(8,8,8,.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      transition: background .3s;
+    }
+    .nav-logo { display: flex; align-items: center; gap: 9px; font-size: 18px; font-weight: 800; letter-spacing: -.4px; }
+    .nav-logo-icon { font-size: 22px; line-height: 1; }
+    .nav-logo-text {
+      background: linear-gradient(130deg, #fff 20%, var(--orange) 80%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .nav-links { display: flex; align-items: center; gap: 32px; }
+    .nav-links a { font-size: 14px; font-weight: 500; color: var(--text2); transition: color .15s; }
+    .nav-links a:hover { color: var(--text); }
+    .nav-cta {
+      padding: 8px 20px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--orange), var(--orange2));
+      color: #fff; font-size: 14px; font-weight: 600;
+      box-shadow: 0 4px 14px rgba(249,115,22,.3);
+      transition: all .2s;
+    }
+    .nav-cta:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(249,115,22,.45); }
+    @media (max-width: 700px) {
+      .nav-links { display: none; }
+    }
+
+    /* ── HERO ──────────────────────────────────────────────── */
+    .hero {
+      position: relative; min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+      padding: 100px clamp(20px, 6vw, 120px) 80px;
+    }
+    .hero-bg {
+      position: absolute; inset: 0; z-index: 0;
+      background-image: url('https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1920&q=80');
+      background-size: cover; background-position: center 40%;
+      filter: brightness(.35) saturate(.8);
+      transition: transform 8s ease;
+    }
+    .hero:hover .hero-bg { transform: scale(1.03); }
+    .hero-overlay {
+      position: absolute; inset: 0; z-index: 1;
+      background:
+        linear-gradient(to right, rgba(8,8,8,.85) 0%, rgba(8,8,8,.55) 55%, rgba(8,8,8,.2) 100%),
+        radial-gradient(ellipse 60% 60% at 20% 50%, rgba(249,115,22,.12) 0%, transparent 60%);
+    }
+    .hero-content {
+      position: relative; z-index: 2;
+      max-width: 700px;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 6px 14px; border-radius: 20px;
+      background: rgba(249,115,22,.14); border: 1px solid rgba(249,115,22,.32);
+      color: var(--orange3); font-size: 12.5px; font-weight: 600;
+      letter-spacing: .02em; margin-bottom: 26px;
+    }
+    .hero-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--orange); animation: bpulse 2s ease-in-out infinite; }
+    @keyframes bpulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+    .hero h1 {
+      font-size: clamp(38px, 6vw, 70px);
+      font-weight: 900; line-height: 1.08;
+      letter-spacing: -2px; margin-bottom: 22px;
+    }
+    .hero h1 em {
+      font-style: normal;
+      background: linear-gradient(135deg, var(--orange3) 0%, var(--orange) 50%, var(--orange2) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .hero p {
+      font-size: clamp(16px, 2vw, 19px); color: rgba(255,255,255,.7);
+      max-width: 520px; line-height: 1.7; margin-bottom: 36px;
+    }
+    .hero-ctas { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 36px; }
+    .btn-hero-primary {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 15px 30px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--orange), var(--orange2));
+      color: #fff; font-size: 15px; font-weight: 700;
+      box-shadow: 0 8px 28px rgba(249,115,22,.4);
+      transition: all .2s; white-space: nowrap;
+    }
+    .btn-hero-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 36px rgba(249,115,22,.55); }
+    .btn-hero-secondary {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 15px 28px; border-radius: 10px;
+      background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.15);
+      color: var(--text); font-size: 15px; font-weight: 600;
+      transition: all .2s; white-space: nowrap;
+    }
+    .btn-hero-secondary:hover { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.3); }
+    .hero-trust {
+      display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center;
+      font-size: 13px; color: var(--text3);
+    }
+    .hero-trust span { display: flex; align-items: center; gap: 5px; }
+    .hero-trust .check { color: var(--orange); font-size: 12px; }
+
+    /* ── STATS BAR ─────────────────────────────────────────── */
+    .stats-bar {
+      background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+      padding: 28px clamp(20px, 5vw, 80px);
+    }
+    .stats-inner {
+      max-width: 900px; margin: 0 auto;
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+    .stat {
+      text-align: center; padding: 0 10px;
+    }
+    .stat-num {
+      font-size: clamp(24px, 3.5vw, 36px); font-weight: 800; letter-spacing: -1px;
+      background: linear-gradient(135deg, #fff, var(--orange3));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      line-height: 1.1; display: block;
+    }
+    .stat-label { font-size: 12.5px; color: var(--text2); margin-top: 4px; font-weight: 500; }
+    @media (max-width: 600px) {
+      .stats-inner { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* ── SHARED SECTION STYLES ─────────────────────────────── */
+    .section { padding: clamp(60px, 8vw, 120px) clamp(20px, 5vw, 80px); }
+    .section-inner { max-width: 1120px; margin: 0 auto; }
+    .section-label {
+      display: inline-block; font-size: 11px; font-weight: 700;
+      letter-spacing: .14em; text-transform: uppercase;
+      color: var(--orange); margin-bottom: 14px;
+    }
+    .section-title {
+      font-size: clamp(28px, 4vw, 48px); font-weight: 800;
+      letter-spacing: -1.5px; line-height: 1.12; margin-bottom: 14px;
+    }
+    .section-sub {
+      font-size: 16px; color: var(--text2); max-width: 520px;
+      line-height: 1.7; margin-bottom: 50px;
+    }
+
+    /* ── PROBLEM CALLOUT ───────────────────────────────────── */
+    .problem-section {
+      background: var(--surface);
+      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+    }
+    .problem-inner {
+      max-width: 1120px; margin: 0 auto;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center;
+    }
+    .problem-img-wrap {
+      position: relative; border-radius: 18px; overflow: hidden;
+      aspect-ratio: 4/3;
+      box-shadow: 0 32px 80px rgba(0,0,0,.7);
+    }
+    .problem-img-wrap img {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    .problem-img-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(249,115,22,.12), transparent);
+    }
+    .problem-content h2 { letter-spacing: -1.2px; margin-bottom: 18px; }
+    .problem-points { display: flex; flex-direction: column; gap: 16px; margin-top: 28px; }
+    .problem-point {
+      display: flex; gap: 14px; align-items: flex-start;
+      padding: 14px 16px;
+      background: rgba(255,255,255,.03); border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .problem-point-icon { font-size: 20px; flex-shrink: 0; line-height: 1; margin-top: 2px; }
+    .problem-point-text { font-size: 14px; color: var(--text2); line-height: 1.55; }
+    .problem-point-text strong { color: var(--text); font-weight: 600; }
+    @media (max-width: 800px) {
+      .problem-inner { grid-template-columns: 1fr; }
+      .problem-img-wrap { max-height: 260px; }
+    }
+
+    /* ── FEATURES ──────────────────────────────────────────── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    .feature-card {
+      padding: 26px 24px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      transition: all .25s cubic-bezier(.4,0,.2,1);
+    }
+    .feature-card:hover {
+      background: rgba(249,115,22,.06);
+      border-color: rgba(249,115,22,.3);
+      transform: translateY(-4px);
+      box-shadow: 0 16px 40px rgba(0,0,0,.5), 0 0 0 1px rgba(249,115,22,.12);
+    }
+    .feature-icon {
+      font-size: 30px; line-height: 1; margin-bottom: 16px; display: block;
+      filter: drop-shadow(0 0 12px rgba(249,115,22,.4));
+    }
+    .feature-title { font-size: 15px; font-weight: 700; margin-bottom: 8px; letter-spacing: -.2px; }
+    .feature-desc { font-size: 13.5px; color: var(--text2); line-height: 1.6; }
+    .feature-pro {
+      display: inline-block; margin-top: 12px;
+      font-size: 10px; font-weight: 700; letter-spacing: .06em;
+      text-transform: uppercase; padding: 3px 8px; border-radius: 4px;
+      background: rgba(249,115,22,.12); color: var(--orange3);
+      border: 1px solid rgba(249,115,22,.2);
+    }
+    @media (max-width: 900px) { .features-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 520px) { .features-grid { grid-template-columns: 1fr; } }
+
+    /* ── HOW IT WORKS ──────────────────────────────────────── */
+    .how-section { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .how-steps {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px;
+      position: relative;
+    }
+    .how-steps::before {
+      content: '';
+      position: absolute; top: 28px; left: 16.67%; right: 16.67%; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(249,115,22,.35), transparent);
+    }
+    .how-step { text-align: center; padding: 10px; }
+    .how-step-num {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--orange), var(--orange2));
+      color: #fff; font-size: 20px; font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px;
+      box-shadow: 0 8px 24px rgba(249,115,22,.4);
+      position: relative; z-index: 1;
+    }
+    .how-step-title { font-size: 17px; font-weight: 700; margin-bottom: 10px; letter-spacing: -.2px; }
+    .how-step-desc { font-size: 14px; color: var(--text2); line-height: 1.65; }
+    .how-step-img {
+      width: 100%; aspect-ratio: 16/9; object-fit: cover;
+      border-radius: 10px; margin-top: 20px;
+      border: 1px solid var(--border);
+      filter: brightness(.85);
+    }
+    @media (max-width: 700px) {
+      .how-steps { grid-template-columns: 1fr; gap: 40px; }
+      .how-steps::before { display: none; }
+    }
+
+    /* ── GALLERY ───────────────────────────────────────────── */
+    .gallery-section { overflow: hidden; }
+    .gallery-header { max-width: 1120px; margin: 0 auto; }
+    .gallery-grid {
+      max-width: 1120px; margin: 0 auto;
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      grid-template-rows: auto auto;
+      gap: 12px;
+    }
+    .gallery-item {
+      border-radius: 12px; overflow: hidden;
+      position: relative; background: var(--surface2);
+    }
+    .gallery-item img {
+      width: 100%; height: 100%; object-fit: cover;
+      filter: brightness(.8) saturate(.9);
+      transition: all .4s ease;
+    }
+    .gallery-item:hover img { filter: brightness(.95) saturate(1.05); transform: scale(1.04); }
+    .gallery-item-1 { grid-row: span 2; min-height: 380px; }
+    .gallery-item-2, .gallery-item-3, .gallery-item-4, .gallery-item-5 { min-height: 180px; }
+    .gallery-caption {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      padding: 20px 16px 14px;
+      background: linear-gradient(transparent, rgba(0,0,0,.7));
+      font-size: 12px; color: rgba(255,255,255,.6); font-weight: 500;
+    }
+    @media (max-width: 700px) {
+      .gallery-grid { grid-template-columns: 1fr 1fr; }
+      .gallery-item-1 { grid-row: span 1; min-height: 220px; }
+    }
+
+    /* ── INSTALL / PWA ─────────────────────────────────────── */
+    .install-section {
+      background: var(--surface);
+      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+    }
+    .install-inner {
+      max-width: 1120px; margin: 0 auto;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center;
+    }
+    .install-phones {
+      display: flex; justify-content: center; gap: 20px; align-items: flex-end;
+    }
+    .phone-frame {
+      width: 160px; height: 300px; border-radius: 28px;
+      background: linear-gradient(160deg, #1a1a1a, #111);
+      border: 1.5px solid rgba(255,255,255,.15);
+      box-shadow: 0 32px 64px rgba(0,0,0,.7), 0 0 0 6px rgba(255,255,255,.03) inset;
+      overflow: hidden; position: relative;
+      flex-shrink: 0;
+    }
+    .phone-frame:first-child { transform: translateY(20px) rotate(-4deg); }
+    .phone-frame:last-child  { transform: rotate(4deg); }
+    .phone-screen {
+      position: absolute; inset: 8px; border-radius: 22px;
+      background: linear-gradient(160deg, #0c0c0c, #141414);
+      overflow: hidden; display: flex; flex-direction: column;
+    }
+    .phone-topbar {
+      background: rgba(249,115,22,.1); padding: 10px 12px 8px;
+      border-bottom: 1px solid rgba(249,115,22,.15);
+      display: flex; align-items: center; gap: 5px;
+    }
+    .phone-topbar-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--orange); }
+    .phone-topbar-name { font-size: 9px; font-weight: 700; color: var(--orange); margin-left: 3px; }
+    .phone-chat { padding: 10px 10px; flex: 1; display: flex; flex-direction: column; gap: 8px; overflow: hidden; }
+    .phone-msg-user {
+      align-self: flex-end; padding: 6px 10px; border-radius: 10px 10px 2px 10px;
+      background: rgba(249,115,22,.2); border: 1px solid rgba(249,115,22,.25);
+      font-size: 7.5px; color: rgba(255,255,255,.9); line-height: 1.4; max-width: 85%;
+    }
+    .phone-msg-ai {
+      align-self: flex-start; padding: 6px 10px; border-radius: 10px 10px 10px 2px;
+      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+      font-size: 7.5px; color: rgba(255,255,255,.75); line-height: 1.4; max-width: 95%;
+    }
+    .phone-input {
+      margin: 0 8px 8px; padding: 7px 10px; border-radius: 12px;
+      background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12);
+      font-size: 7px; color: rgba(255,255,255,.3);
+    }
+    .install-content { }
+    .install-steps { display: flex; flex-direction: column; gap: 16px; margin-top: 28px; }
+    .install-step {
+      display: flex; gap: 14px; align-items: flex-start;
+      padding: 14px 16px;
+      background: rgba(255,255,255,.03); border: 1px solid var(--border);
+      border-radius: 10px; transition: border-color .2s;
+    }
+    .install-step:hover { border-color: rgba(249,115,22,.3); }
+    .install-step-icon { font-size: 22px; flex-shrink: 0; }
+    .install-step-title { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+    .install-step-desc { font-size: 13px; color: var(--text2); line-height: 1.5; }
+    @media (max-width: 800px) {
+      .install-inner { grid-template-columns: 1fr; }
+      .install-phones { display: none; }
+    }
+
+    /* ── PRICING ───────────────────────────────────────────── */
+    .pricing-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+      max-width: 960px; margin: 0 auto;
+    }
+    .pricing-card {
+      padding: 30px 26px; border-radius: 18px;
+      background: rgba(255,255,255,.03); border: 1px solid var(--border);
+      display: flex; flex-direction: column; gap: 0;
+      transition: all .25s;
+    }
+    .pricing-card.popular {
+      background: linear-gradient(160deg, rgba(249,115,22,.1) 0%, rgba(249,115,22,.04) 100%);
+      border-color: rgba(249,115,22,.35);
+      box-shadow: 0 24px 60px rgba(0,0,0,.5), 0 0 0 1px rgba(249,115,22,.15);
+      transform: scale(1.03);
+    }
+    .pricing-card:hover:not(.popular) { border-color: rgba(255,255,255,.18); transform: translateY(-4px); }
+    .pricing-badge {
+      display: inline-block; margin-bottom: 14px;
+      font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+      padding: 4px 10px; border-radius: 4px;
+      background: linear-gradient(135deg, var(--orange), var(--orange2));
+      color: #fff;
+    }
+    .pricing-name  { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+    .pricing-price { font-size: 40px; font-weight: 900; letter-spacing: -2px; line-height: 1; margin-bottom: 4px; }
+    .pricing-price span { font-size: 16px; font-weight: 500; color: var(--text2); letter-spacing: 0; }
+    .pricing-period { font-size: 12.5px; color: var(--text2); margin-bottom: 24px; }
+    .pricing-features { list-style: none; display: flex; flex-direction: column; gap: 10px; flex: 1; margin-bottom: 26px; }
+    .pricing-features li { font-size: 13.5px; display: flex; align-items: flex-start; gap: 9px; }
+    .pricing-features li::before { content: '✓'; color: var(--orange); font-weight: 700; flex-shrink: 0; line-height: 1.6; }
+    .pricing-cta {
+      display: block; width: 100%; padding: 13px 20px; border-radius: 10px;
+      text-align: center; font-size: 14px; font-weight: 700;
+      transition: all .2s; cursor: pointer;
+    }
+    .pricing-cta-primary {
+      background: linear-gradient(135deg, var(--orange), var(--orange2));
+      color: #fff; box-shadow: 0 6px 20px rgba(249,115,22,.3);
+    }
+    .pricing-cta-primary:hover { box-shadow: 0 8px 28px rgba(249,115,22,.5); transform: translateY(-1px); }
+    .pricing-cta-outline {
+      background: transparent; border: 1px solid var(--border); color: var(--text2);
+    }
+    .pricing-cta-outline:hover { border-color: rgba(255,255,255,.25); color: var(--text); }
+    @media (max-width: 800px) {
+      .pricing-grid { grid-template-columns: 1fr; max-width: 400px; }
+      .pricing-card.popular { transform: scale(1); }
+    }
+
+    /* ── FINAL CTA ─────────────────────────────────────────── */
+    .cta-section {
+      text-align: center; padding: clamp(80px, 10vw, 140px) clamp(20px, 5vw, 80px);
+      position: relative; overflow: hidden;
+    }
+    .cta-section::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 70% 70% at 50% 50%, rgba(249,115,22,.1) 0%, transparent 65%);
+    }
+    .cta-section h2 {
+      font-size: clamp(28px, 5vw, 56px); font-weight: 900;
+      letter-spacing: -2px; line-height: 1.08; margin-bottom: 20px;
+      position: relative;
+    }
+    .cta-section p {
+      font-size: 17px; color: var(--text2); max-width: 500px; margin: 0 auto 36px;
+      line-height: 1.65; position: relative;
+    }
+    .cta-section .ctas { position: relative; display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+
+    /* ── FOOTER ────────────────────────────────────────────── */
+    footer {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 44px clamp(20px, 5vw, 80px) 32px;
+    }
+    .footer-inner {
+      max-width: 1120px; margin: 0 auto;
+      display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px;
+      margin-bottom: 36px;
+    }
+    .footer-brand { }
+    .footer-logo { display: flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 800; margin-bottom: 12px; }
+    .footer-logo-text {
+      background: linear-gradient(130deg, #fff, var(--orange));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .footer-tagline { font-size: 13px; color: var(--text2); max-width: 240px; line-height: 1.6; }
+    .footer-col h4 { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text2); margin-bottom: 14px; }
+    .footer-col a { display: block; font-size: 13.5px; color: var(--text2); margin-bottom: 9px; transition: color .15s; }
+    .footer-col a:hover { color: var(--text); }
+    .footer-bottom {
+      border-top: 1px solid var(--border); padding-top: 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 12px; color: var(--text3); flex-wrap: wrap; gap: 10px;
+    }
+    .footer-bottom a { color: var(--text2); transition: color .15s; }
+    .footer-bottom a:hover { color: var(--text); }
+    @media (max-width: 768px) {
+      .footer-inner { grid-template-columns: 1fr 1fr; }
+      .footer-brand { grid-column: span 2; }
+    }
+    @media (max-width: 480px) {
+      .footer-inner { grid-template-columns: 1fr; }
+      .footer-brand { grid-column: span 1; }
+    }
+
+    /* ── UTILS ─────────────────────────────────────────────── */
+    .orange { color: var(--orange); }
+    .fade-in { animation: fi .6s ease both; }
+    @keyframes fi { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+  </style>
+</head>
+<body>
+
+<!-- ── NAV ─────────────────────────────────────────────────── -->
+<nav class="nav">
+  <a href="https://web-production-5205e.up.railway.app/" class="nav-logo">
+    <span class="nav-logo-icon">🛞</span>
+    <span class="nav-logo-text">Carma</span>
+  </a>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#how">How It Works</a>
+    <a href="#pricing">Pricing</a>
+  </div>
+  <a href="https://web-production-5205e.up.railway.app/" class="nav-cta">Open App →</a>
+</nav>
+
+<!-- ── HERO ────────────────────────────────────────────────── -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <div class="hero-badge">
+      <span class="hero-badge-dot"></span>
+      Powered by Claude AI &nbsp;·&nbsp; Free to start
+    </div>
+    <h1>Your car is telling<br>you something.<br><em>Carma speaks<br>its language.</em></h1>
+    <p>Describe any problem in plain English — a noise, a warning light, a weird smell. Get a clear, honest diagnosis in seconds. No mechanic jargon. No guessing. No waiting.</p>
+    <div class="hero-ctas">
+      <a href="https://web-production-5205e.up.railway.app/" class="btn-hero-primary">
+        Try Carma Free
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+      <a href="#how" class="btn-hero-secondary">
+        See How It Works
+      </a>
+    </div>
+    <div class="hero-trust">
+      <span><span class="check">✓</span> No mechanic degree needed</span>
+      <span><span class="check">✓</span> Works on any car, any year</span>
+      <span><span class="check">✓</span> 13+ languages supported</span>
+    </div>
+  </div>
+</section>
+
+<!-- ── STATS BAR ────────────────────────────────────────────── -->
+<div class="stats-bar">
+  <div class="stats-inner">
+    <div class="stat">
+      <span class="stat-num">50K+</span>
+      <div class="stat-label">Diagnoses made</div>
+    </div>
+    <div class="stat">
+      <span class="stat-num">13</span>
+      <div class="stat-label">Languages supported</div>
+    </div>
+    <div class="stat">
+      <span class="stat-num">8</span>
+      <div class="stat-label">Pro tools included</div>
+    </div>
+    <div class="stat">
+      <span class="stat-num">&lt;5s</span>
+      <div class="stat-label">Average response time</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PROBLEM / SOLUTION ──────────────────────────────────── -->
+<section class="problem-section section">
+  <div class="problem-inner section-inner" style="max-width:1120px">
+    <div class="problem-img-wrap">
+      <img
+        src="https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=800&q=80"
+        alt="Mechanic working on car engine"
+        loading="lazy"
+      />
+      <div class="problem-img-overlay"></div>
+    </div>
+    <div class="problem-content">
+      <div class="section-label">The Problem</div>
+      <h2 class="section-title" style="margin-bottom:14px">Most people have no idea<br>what their car is saying.</h2>
+      <p style="font-size:15px;color:var(--text2);line-height:1.7;margin-bottom:0">
+        A warning light comes on. You hear a new noise. Something smells off. Most drivers either panic and rush to a mechanic — or ignore it and hope for the best. Both options cost you money.
+      </p>
+      <div class="problem-points">
+        <div class="problem-point">
+          <span class="problem-point-icon">💸</span>
+          <div class="problem-point-text"><strong>Mechanics charge just to look.</strong> Diagnostic fees of $100–$200 before they've even found anything.</div>
+        </div>
+        <div class="problem-point">
+          <span class="problem-point-icon">😰</span>
+          <div class="problem-point-text"><strong>Jargon leaves you vulnerable.</strong> Without knowing if a repair is fair, you can't negotiate or push back.</div>
+        </div>
+        <div class="problem-point">
+          <span class="problem-point-icon">⏰</span>
+          <div class="problem-point-text"><strong>Waiting is expensive.</strong> Small problems become big ones. Big ones become breakdowns.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FEATURES ─────────────────────────────────────────────── -->
+<section class="section" id="features">
+  <div class="section-inner">
+    <div class="section-label">What Carma Can Do</div>
+    <h2 class="section-title">Every tool you need.<br>None of the BS.</h2>
+    <p class="section-sub">Eight pro-grade tools packed into one app. Diagnose, plan, shop, negotiate — all from your phone.</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <span class="feature-icon">🔍</span>
+        <div class="feature-title">AI Car Diagnosis</div>
+        <div class="feature-desc">Describe what's happening in your own words. Carma explains the most likely cause, how urgent it is, and exactly what to do next — without the jargon.</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🧾</span>
+        <div class="feature-title">Quote Checker</div>
+        <div class="feature-desc">Paste in a repair estimate and find out if you're being overcharged. Get a fair price range, red flags to watch for, and whether to get a second opinion.</div>
+        <span class="feature-pro">Pro</span>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🔎</span>
+        <div class="feature-title">VIN Report</div>
+        <div class="feature-desc">Enter any 17-digit VIN and get full recall history, owner complaint data, and an honest AI verdict on whether the car is worth buying or keeping.</div>
+        <span class="feature-pro">Pro</span>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">💬</span>
+        <div class="feature-title">Negotiation Coach</div>
+        <div class="feature-desc">Get word-for-word phone and in-person scripts to negotiate a lower repair quote. Includes your walk-away line and power moves that actually work.</div>
+        <span class="feature-pro">Pro</span>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🔧</span>
+        <div class="feature-title">DIY Repair Guide</div>
+        <div class="feature-desc">Step-by-step instructions to fix the issue yourself — tools needed, parts, cost estimates, and exactly where to find the problem on your specific car.</div>
+        <span class="feature-pro">Pro</span>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🚨</span>
+        <div class="feature-title">Recall Alerts</div>
+        <div class="feature-desc">Carma checks NHTSA automatically and alerts you the moment a recall is issued for any of your saved vehicles. Never miss a free fix.</div>
+        <span class="feature-pro">Pro</span>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🛒</span>
+        <div class="feature-title">Parts Finder</div>
+        <div class="feature-desc">Instantly find the exact parts needed for your diagnosis. Compare prices across AutoZone, Amazon, and RockAuto — and decide if you should DIY.</div>
+        <span class="feature-pro">Pro</span>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">💰</span>
+        <div class="feature-title">Repair Log</div>
+        <div class="feature-desc">Track every repair you've made, what it cost, and when. Then ask Carma: "Is this car still worth keeping?" Get an honest answer based on your actual data.</div>
+        <span class="feature-pro">Pro</span>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🌐</span>
+        <div class="feature-title">Any Language</div>
+        <div class="feature-desc">Write in Spanish, French, Arabic, Hindi, Japanese — Carma responds in your language. Perfect for anyone who isn't comfortable with English car terminology.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── HOW IT WORKS ──────────────────────────────────────────── -->
+<section class="how-section section" id="how">
+  <div class="section-inner">
+    <div style="text-align:center;margin-bottom:50px">
+      <div class="section-label">How It Works</div>
+      <h2 class="section-title">From problem to answer<br>in three steps.</h2>
+    </div>
+    <div class="how-steps">
+      <div class="how-step">
+        <div class="how-step-num">1</div>
+        <div class="how-step-title">Describe what's happening</div>
+        <div class="how-step-desc">Type it out, speak it, or snap a photo. Tell Carma about the noise, the smell, the light — anything feels off. Your car, your words.</div>
+        <img
+          class="how-step-img"
+          src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=600&q=75"
+          alt="Car steering wheel and dashboard"
+          loading="lazy"
+        />
+      </div>
+      <div class="how-step">
+        <div class="how-step-num">2</div>
+        <div class="how-step-title">Carma diagnoses it</div>
+        <div class="how-step-desc">Claude AI pulls from a deep knowledge base of automotive systems, recall databases, and real-world repair data to give you a clear, specific answer.</div>
+        <img
+          class="how-step-img"
+          src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=600&q=75"
+          alt="Car engine components"
+          loading="lazy"
+        />
+      </div>
+      <div class="how-step">
+        <div class="how-step-num">3</div>
+        <div class="how-step-title">Know exactly what to do</div>
+        <div class="how-step-desc">You get the cause, the urgency, the cost range, and your next steps — whether that's a quick DIY fix, a trip to the shop, or "safe to ignore for now."</div>
+        <img
+          class="how-step-img"
+          src="https://images.unsplash.com/photo-1490650034914-e3f460a10e0a?auto=format&fit=crop&w=600&q=75"
+          alt="Person checking car repair"
+          loading="lazy"
+        />
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── GALLERY ───────────────────────────────────────────────── -->
+<section class="gallery-section section" style="padding-bottom:30px">
+  <div class="gallery-header" style="margin-bottom:28px">
+    <div class="section-label">Built for Real Drivers</div>
+    <h2 class="section-title" style="max-width:500px">From first cars to garage queens.<br>Carma handles it all.</h2>
+  </div>
+  <div class="gallery-grid">
+    <div class="gallery-item gallery-item-1">
+      <img
+        src="https://images.unsplash.com/photo-1611566026373-c6c8da0ea861?auto=format&fit=crop&w=800&q=80"
+        alt="Mechanic working in repair shop"
+        loading="lazy"
+      />
+      <div class="gallery-caption">Professional mechanics use it too</div>
+    </div>
+    <div class="gallery-item gallery-item-2">
+      <img
+        src="https://images.unsplash.com/photo-1580273916550-e323be2ae537?auto=format&fit=crop&w=600&q=75"
+        alt="Modern car interior at night"
+        loading="lazy"
+      />
+      <div class="gallery-caption">Any make, any model</div>
+    </div>
+    <div class="gallery-item gallery-item-3">
+      <img
+        src="https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&w=600&q=75"
+        alt="Driver on road at night"
+        loading="lazy"
+      />
+      <div class="gallery-caption">Help when you need it most</div>
+    </div>
+    <div class="gallery-item gallery-item-4">
+      <img
+        src="https://images.unsplash.com/photo-1537984822441-cff330075342?auto=format&fit=crop&w=600&q=75"
+        alt="Car engine maintenance"
+        loading="lazy"
+      />
+      <div class="gallery-caption">Under the hood, demystified</div>
+    </div>
+    <div class="gallery-item gallery-item-5">
+      <img
+        src="https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=600&q=75"
+        alt="Luxury car on open road"
+        loading="lazy"
+      />
+      <div class="gallery-caption">Drive with confidence</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── INSTALL / PWA ─────────────────────────────────────────── -->
+<section class="install-section section">
+  <div class="install-inner section-inner" style="max-width:1120px">
+    <div class="install-content">
+      <div class="section-label">Get It on Your Phone</div>
+      <h2 class="section-title" style="margin-bottom:14px">Your mechanic in your pocket.<br>Always.</h2>
+      <p style="font-size:15px;color:var(--text2);line-height:1.7">
+        Add Carma to your home screen and it works exactly like a native app — even offline. No App Store needed. No download fees. Just tap and go.
+      </p>
+      <div class="install-steps">
+        <div class="install-step">
+          <span class="install-step-icon">🍎</span>
+          <div>
+            <div class="install-step-title">iPhone (Safari)</div>
+            <div class="install-step-desc">Open Carma in Safari → tap the Share icon → select "Add to Home Screen" → tap Add.</div>
+          </div>
+        </div>
+        <div class="install-step">
+          <span class="install-step-icon">🤖</span>
+          <div>
+            <div class="install-step-title">Android (Chrome)</div>
+            <div class="install-step-desc">Open Carma in Chrome → tap the ⋮ menu → select "Add to Home screen" → tap Add. A proper app icon appears instantly.</div>
+          </div>
+        </div>
+        <div class="install-step">
+          <span class="install-step-icon">💻</span>
+          <div>
+            <div class="install-step-title">Desktop (Chrome / Edge)</div>
+            <div class="install-step-desc">Look for the install icon (⊕) in the address bar, or go to Settings → "Install Carma." Works offline too.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="install-phones">
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <div class="phone-topbar">
+            <div class="phone-topbar-dot"></div>
+            <span class="phone-topbar-name">Carma</span>
+          </div>
+          <div class="phone-chat">
+            <div class="phone-msg-user">My check engine light came on this morning. Should I be worried?</div>
+            <div class="phone-msg-ai">The most likely cause is a loose gas cap or an O2 sensor — both minor. Check your gas cap first. If the light stays on after 1–2 drives, schedule a scan. It's safe to drive for now unless you see any of these...</div>
+          </div>
+          <div class="phone-input">Describe what's happening…</div>
+        </div>
+      </div>
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <div class="phone-topbar">
+            <div class="phone-topbar-dot"></div>
+            <span class="phone-topbar-name">Carma</span>
+          </div>
+          <div class="phone-chat">
+            <div class="phone-msg-user">Mechanic quoted $780 for brake pads + rotors. Is that fair?</div>
+            <div class="phone-msg-ai">That's on the high end. Fair range for this job is $350–$550 at most shops. Here's how to negotiate it down and exactly what to say on the phone...</div>
+          </div>
+          <div class="phone-input">Describe what's happening…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── PRICING ───────────────────────────────────────────────── -->
+<section class="section" id="pricing">
+  <div class="section-inner">
+    <div style="text-align:center;margin-bottom:50px">
+      <div class="section-label">Pricing</div>
+      <h2 class="section-title">Simple. Transparent.<br>No surprises.</h2>
+      <p style="font-size:16px;color:var(--text2);max-width:420px;margin:12px auto 0;line-height:1.65">
+        Start free. Upgrade when you're ready. Cancel any time — no questions asked.
+      </p>
+    </div>
+    <div class="pricing-grid">
+      <div class="pricing-card">
+        <div class="pricing-name">Free</div>
+        <div class="pricing-price">$0<span>/mo</span></div>
+        <div class="pricing-period">Always free · no card needed</div>
+        <ul class="pricing-features">
+          <li>5 AI diagnoses per day</li>
+          <li>Any language support</li>
+          <li>Photo diagnosis</li>
+          <li>Voice input</li>
+          <li>OBD code lookup</li>
+        </ul>
+        <a href="https://web-production-5205e.up.railway.app/" class="pricing-cta pricing-cta-outline">Get Started Free</a>
+      </div>
+      <div class="pricing-card popular">
+        <div class="pricing-badge">Most Popular</div>
+        <div class="pricing-name">Pro ✦</div>
+        <div class="pricing-price">$9.99<span>/mo</span></div>
+        <div class="pricing-period">Or $99/year — save 17%</div>
+        <ul class="pricing-features">
+          <li>Unlimited diagnoses every day</li>
+          <li>All 8 tools unlocked</li>
+          <li>Save up to 3 vehicles</li>
+          <li>NHTSA recall alerts</li>
+          <li>VIN reports &amp; negotiate coach</li>
+          <li>Repair log + cost analysis</li>
+          <li>Priority AI responses</li>
+          <li>7-day free trial</li>
+        </ul>
+        <a href="https://web-production-5205e.up.railway.app/" class="pricing-cta pricing-cta-primary">Start Free Trial →</a>
+      </div>
+      <div class="pricing-card">
+        <div class="pricing-name">Family 👨‍👩‍👧‍👦</div>
+        <div class="pricing-price">$19.99<span>/mo</span></div>
+        <div class="pricing-period">Up to 5 members · or $199/year</div>
+        <ul class="pricing-features">
+          <li>Everything in Pro</li>
+          <li>Up to 5 family members</li>
+          <li>Each member gets 3 cars</li>
+          <li>One bill, shared access</li>
+          <li>Priority AI for all members</li>
+        </ul>
+        <a href="https://web-production-5205e.up.railway.app/" class="pricing-cta pricing-cta-outline">Get Family Plan</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FINAL CTA ─────────────────────────────────────────────── -->
+<section class="cta-section">
+  <h2>Stop guessing.<br>Start <em style="font-style:normal;background:linear-gradient(135deg,var(--orange3),var(--orange));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">knowing.</em></h2>
+  <p>Your next car problem just met its match. Try Carma free — no account, no credit card. Just answers.</p>
+  <div class="ctas">
+    <a href="https://web-production-5205e.up.railway.app/" class="btn-hero-primary">
+      Try Carma Free
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
+    <a href="#features" class="btn-hero-secondary">See All Features</a>
+  </div>
+</section>
+
+<!-- ── FOOTER ────────────────────────────────────────────────── -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="footer-logo">
+        <span>🛞</span>
+        <span class="footer-logo-text">Carma</span>
+      </div>
+      <p class="footer-tagline">AI-powered car diagnosis in plain English. For every driver, in every language, for every car.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Product</h4>
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+      <a href="https://web-production-5205e.up.railway.app/">Open App</a>
+    </div>
+    <div class="footer-col">
+      <h4>Legal</h4>
+      <a href="https://web-production-5205e.up.railway.app/terms">Terms of Service</a>
+      <a href="https://web-production-5205e.up.railway.app/privacy">Privacy Policy</a>
+    </div>
+    <div class="footer-col">
+      <h4>Support</h4>
+      <a href="https://web-production-5205e.up.railway.app/">Try the App</a>
+      <a href="#how">How It Works</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2025 Carma AI. All rights reserved.</span>
+    <span>Built with 🛞 and Claude AI</span>
+    <span>
+      <a href="https://web-production-5205e.up.railway.app/terms">Terms</a> &nbsp;·&nbsp;
+      <a href="https://web-production-5205e.up.railway.app/privacy">Privacy</a>
+    </span>
+  </div>
+</footer>
+
+<script>
+  // Smooth nav scroll → add background on scroll
+  const nav = document.querySelector('.nav');
+  window.addEventListener('scroll', () => {
+    nav.style.background = window.scrollY > 60
+      ? 'rgba(8,8,8,.96)'
+      : 'rgba(8,8,8,.75)';
+  }, { passive: true });
+
+  // Intersection observer for fade-in animations
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.style.opacity = '1';
+        e.target.style.transform = 'translateY(0)';
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.feature-card, .how-step, .pricing-card, .problem-point, .install-step').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(24px)';
+    el.style.transition = 'opacity .5s ease, transform .5s ease';
+    observer.observe(el);
+  });
+</script>
+</body>
+</html>
